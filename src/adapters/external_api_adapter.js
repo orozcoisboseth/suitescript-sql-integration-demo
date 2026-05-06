@@ -3,13 +3,19 @@
  * Simulates communication with a .NET API that persists data in SQL Server
  */
 
-define(['../mock/sql_storage_mock'], function (sqlMock) {
 
-    function send(payload) {
-        return sqlMock.insert(payload);
-    }
+(function (root, factory) {
+  if (typeof define === 'function') {
+    define(['../mock/sql_storage_mock'], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    module.exports = factory(require('../mock/sql_storage_mock'));
+  }
+}(this, function (sqlMock) {
 
-    return {
-        send: send
-    };
-});
+  function send(payload) {
+    return sqlMock.insert(payload);
+  }
+
+  return { send };
+}));
+
