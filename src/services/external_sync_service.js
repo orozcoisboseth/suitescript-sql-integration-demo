@@ -5,42 +5,52 @@
  * to an external SQL-based system via an API adapter.
  */
 
-define(['../adapters/external_api_adapter'], function (apiAdapter) {
+(function (root, factory) {
 
-    /**
-     * Sends a transaction to the external system.
-     * @param {Object} trx
-     * @param {number} trx.id - NetSuite record internal ID
-     * @param {string} trx.type - NetSuite record type
-     */
-    function sendTransaction(trx) {
+  if (typeof define === 'function') {
+    // NetSuite (SuiteScript AMD)
+    define(['../adapters/external_api_adapter'], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    // Node.js (local tests)
+    module.exports = factory(
+      require('../adapters/external_api_adapter')
+    );
+  }
 
-        // Build reference similar to real integration
-        var referencePrefix = trx.type === 'salesorder'
-            ? 'SO'
-            : 'PO';
+}(this, function (apiAdapter) {
 
-        var payload = {
-            reference: referencePrefix + '-' + trx.id,
-            sourceSystem: 'NetSuite',
-            timestamp: new Date().toISOString()
-        };
+  /**
+   * Sends a NetSuite transaction to an external system (demo).
+   * @param {Object} trx
+   * @param {number} trx.id
+   * @param {string} trx.type
+   */
+  function sendTransaction(trx) {
 
-        // Call external API via adapter (mock)
-        var response = apiAdapter.send(payload);
+    var referencePrefix = trx.type === 'salesorder'
+      ? 'SO'
+      : 'PO';
 
-        if (!response || !response.success) {
-            throw new Error('Failed to sync transaction with external system');
-        }
+    var payload = {
+      reference: referencePrefix + '-' + trx.id,
+      sourceSystem: 'NetSuite',
+      timestamp: new Date().toISOString()
+    };
 
-        return {
-            success: true,
-            externalId: response.externalId,
-            duplicated: response.duplicated === true
-        };
+    var response = apiAdapter.send(payload);
+
+    if (!response || !response.success) {
+      throw new Error('Failed to sync transaction with external system');
     }
 
     return {
-        sendTransaction: sendTransaction
+      success: true,
+      externalId: response.externalId,
+      duplicated: response.duplicated === true
     };
-});
+  }
+
+  return {
+    sendTransaction: sendTransaction
+  };
+}));
